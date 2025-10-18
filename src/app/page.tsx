@@ -1,91 +1,141 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
+import { Advocate } from "./types/db";
 
 export default function Home() {
-  const [advocates, setAdvocates] = useState([]);
-  const [filteredAdvocates, setFilteredAdvocates] = useState([]);
+  const [advocates, setAdvocates] = useState<Advocate[]>([]);
+  const [searchTerm, setSearchTerm] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const tableHeaders = ["Name", "City", "Specialties", "Years of Experience", "Phone Number"];
 
   useEffect(() => {
-    console.log("fetching advocates...");
+    setIsLoading(true);
     fetch("/api/advocates").then((response) => {
       response.json().then((jsonResponse) => {
         setAdvocates(jsonResponse.data);
-        setFilteredAdvocates(jsonResponse.data);
+        setIsLoading(false);
       });
     });
   }, []);
 
-  const onChange = (e) => {
-    const searchTerm = e.target.value;
+  const searchAdvocates = useCallback(async (query: string | null) => {
+    try {
+      setIsLoading(true);
+      const url = query === null || query.trim() === "" 
+        ? "/api/advocates" 
+        : `/api/advocates?search=${encodeURIComponent(query)}`;
+      
+      const response = await fetch(url);
+      const jsonResponse = await response.json();
+      setAdvocates(jsonResponse.data);
+      setIsLoading(false);
+    } catch (error) {
+      console.error("Error searching advocates:", error);
+      setIsLoading(false);
+    }
+  }, []);
 
-    document.getElementById("search-term").innerHTML = searchTerm;
+  const debouncedSearch = useCallback(
+    (() => {
+      let timeoutId: NodeJS.Timeout;
+      return (query: string | null) => {
+        clearTimeout(timeoutId);
+        timeoutId = setTimeout(() => {
+          searchAdvocates(query);
+        }, 150);
+      };
+    })(),
+    [searchAdvocates]
+  ); 
+  
+  // usecallback hook here to avoid re-rendering the component unnecessarily. 
+  // function is wrapped in an anonymous function to keep timeoutId in a closure, preventing it from being garbage collected and reset
+  // this also uses immediate invocation to avoid the need to bind the function to the component
 
-    console.log("filtering advocates...");
-    const filteredAdvocates = advocates.filter((advocate) => {
-      return (
-        advocate.firstName.includes(searchTerm) ||
-        advocate.lastName.includes(searchTerm) ||
-        advocate.city.includes(searchTerm) ||
-        advocate.degree.includes(searchTerm) ||
-        advocate.specialties.includes(searchTerm) ||
-        advocate.yearsOfExperience.includes(searchTerm)
-      );
-    });
-
-    setFilteredAdvocates(filteredAdvocates);
+  const resetList = () => {
+    setSearchTerm(null);
+    debouncedSearch(null);
   };
 
-  const onClick = () => {
-    console.log(advocates);
-    setFilteredAdvocates(advocates);
+  const onSearchInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setSearchTerm(value);
+    debouncedSearch(value);
+  };
+
+  const formatPhoneNumber = (phoneNumber: string | null | undefined): string => {
+    if (!phoneNumber) return "";
+    const phoneStr = String(phoneNumber);
+    return `(${phoneStr.slice(0,3)}) ${phoneStr.slice(3,6)}-${phoneStr.slice(6,10)}`;
   };
 
   return (
-    <main style={{ margin: "24px" }}>
-      <h1>Solace Advocates</h1>
-      <br />
-      <br />
-      <div>
-        <p>Search</p>
-        <p>
-          Searching for: <span id="search-term"></span>
-        </p>
-        <input style={{ border: "1px solid black" }} onChange={onChange} />
-        <button onClick={onClick}>Reset Search</button>
+    <main className="xl:m-[24px] m-[12px]">
+      <h1 className="xl:mb-12 sm:mb-6 mb-4">Solace Advocates</h1>
+      <div className="xl:mb-12 sm:mb-6 mb-4">
+        <input 
+          className="border border-black xl:text-base sm:text-sm" 
+          value={searchTerm || ""}
+          onChange={onSearchInputChange} 
+          placeholder="Search" 
+        />
+        <button 
+          onClick={() => resetList()} 
+          className="xl:text-base sm:text-sm ml-4 px-4 py-0.5 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors cursor-pointer"
+        >
+          Reset Search
+        </button>
       </div>
-      <br />
-      <br />
-      <table>
+
+      <table className="w-full text-left table-fixed xl:text-base sm:text-sm text-xs">
         <thead>
-          <th>First Name</th>
-          <th>Last Name</th>
-          <th>City</th>
-          <th>Degree</th>
-          <th>Specialties</th>
-          <th>Years of Experience</th>
-          <th>Phone Number</th>
+          <tr className="bg-gray-100 text-center">
+            {tableHeaders.map((header : string) => (
+              <th key={header} className= "p-1 w-1/5">{header}</th>
+            ))}
+          </tr>
         </thead>
-        <tbody>
-          {filteredAdvocates.map((advocate) => {
-            return (
-              <tr>
-                <td>{advocate.firstName}</td>
-                <td>{advocate.lastName}</td>
-                <td>{advocate.city}</td>
-                <td>{advocate.degree}</td>
-                <td>
-                  {advocate.specialties.map((s) => (
-                    <div>{s}</div>
-                  ))}
-                </td>
-                <td>{advocate.yearsOfExperience}</td>
-                <td>{advocate.phoneNumber}</td>
-              </tr>
-            );
+        <tbody className="before:content-[''] before:block before:h-4">
+          {advocates.map((advocate : Advocate, index : number) => {
+              return (
+                <tr key={`row-${index}`} className="border-b border-gray-200">
+                  <td className="p-1 mx-1">{`${advocate.firstName} ${advocate.lastName} ${advocate.degree}`}</td>
+                  <td className="p-1 mx-1">{advocate.city}</td>
+                  <td className="p-1 mx-1">
+                    <div className="flex flex-wrap gap-1">
+                      {(advocate.specialties as string[]).map((s: string, specIndex: number) => (
+                        <span key={specIndex} className="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">
+                          {s}
+                        </span>
+                      ))}
+                    </div>
+                  </td>
+                  <td className="p-1 mx-1 text-center">{advocate.yearsOfExperience}</td>
+                  <td className="p-1 mx-1 text-center">
+                    {formatPhoneNumber(String(advocate.phoneNumber))}
+                  </td>
+                </tr>
+              );
           })}
         </tbody>
       </table>
+      {isLoading && (
+        <div className="flex justify-center items-center py-8">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+          <span className="ml-2 text-gray-600">Loading...</span>
+        </div>
+      )}
+      {!isLoading && advocates.length === 0 && (
+        <div className="flex justify-center items-center py-12">
+          <div className="text-center">
+            <div className="text-gray-500 text-lg mb-2">No Advocates Found</div>
+            <div className="text-gray-400 text-sm">
+              {searchTerm ? `No advocates match your search for "${searchTerm}"` : "No advocates available"}
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }

@@ -7,3 +7,6 @@ Given more time, I woulkd like to change the following:
 
 * Better seeding
     Seeding a Database through an API call is not advisable since that particular migration is entirely contingent on insitutional knowledge to not run that seed function again. After some work done to address these issues that rendered no acceptable results, I resolved to leave it for now.
+
+* Sorting and Filtering
+    Extending the discussion of schema, I would have liked to include ways to sort and filter the data on the table, including filtering by speciality.

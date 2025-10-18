@@ -46,7 +46,7 @@ export async function GET(request: NextRequest) {
     const allData: Advocate[] = await getAllAdvocates();
     return Response.json({ data: allData }, {
       headers: {
-        'Cache-Control': 'public, max-age=300, stale-while-revalidate=600',
+        'Cache-Control': 'public, max-age=30, stale-while-revalidate=60',
         'ETag': `"all-advocates-${Date.now()}"`
       }
     });
