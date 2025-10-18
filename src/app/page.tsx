@@ -5,8 +5,7 @@ import { Advocate } from "./types/db";
 
 export default function Home() {
   const [advocates, setAdvocates] = useState<Advocate[]>([]);
-  const [filteredAdvocates, setFilteredAdvocates] = useState<Advocate[]>([]);
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchTerm, setSearchTerm] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const tableHeaders = ["Name", "City", "Specialties", "Years of Experience", "Phone Number"];
 
@@ -15,22 +14,21 @@ export default function Home() {
     fetch("/api/advocates").then((response) => {
       response.json().then((jsonResponse) => {
         setAdvocates(jsonResponse.data);
-        setFilteredAdvocates(jsonResponse.data);
         setIsLoading(false);
       });
     });
   }, []);
 
-  const searchAdvocates = useCallback(async (query: string) => {
+  const searchAdvocates = useCallback(async (query: string | null) => {
     try {
       setIsLoading(true);
-      const url = query.trim() === "" 
+      const url = query === null || query.trim() === "" 
         ? "/api/advocates" 
         : `/api/advocates?search=${encodeURIComponent(query)}`;
       
       const response = await fetch(url);
       const jsonResponse = await response.json();
-      setFilteredAdvocates(jsonResponse.data);
+      setAdvocates(jsonResponse.data);
       setIsLoading(false);
     } catch (error) {
       console.error("Error searching advocates:", error);
@@ -41,7 +39,7 @@ export default function Home() {
   const debouncedSearch = useCallback(
     (() => {
       let timeoutId: NodeJS.Timeout;
-      return (query: string) => {
+      return (query: string | null) => {
         clearTimeout(timeoutId);
         timeoutId = setTimeout(() => {
           searchAdvocates(query);
@@ -56,8 +54,8 @@ export default function Home() {
   // this also uses immediate invocation to avoid the need to bind the function to the component
 
   const resetList = () => {
-    setSearchTerm("");
-    setFilteredAdvocates(advocates);
+    setSearchTerm(null);
+    debouncedSearch(null);
   };
 
   const onSearchInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -78,7 +76,7 @@ export default function Home() {
       <div className="xl:mb-12 sm:mb-6 mb-4">
         <input 
           className="border border-black xl:text-base sm:text-sm" 
-          value={searchTerm}
+          value={searchTerm || ""}
           onChange={onSearchInputChange} 
           placeholder="Search" 
         />
@@ -99,7 +97,7 @@ export default function Home() {
           </tr>
         </thead>
         <tbody className="before:content-[''] before:block before:h-4">
-          {filteredAdvocates.map((advocate : Advocate, index : number) => {
+          {advocates.map((advocate : Advocate, index : number) => {
               return (
                 <tr key={`row-${index}`} className="border-b border-gray-200">
                   <td className="p-1 mx-1">{`${advocate.firstName} ${advocate.lastName} ${advocate.degree}`}</td>
@@ -128,7 +126,7 @@ export default function Home() {
           <span className="ml-2 text-gray-600">Loading...</span>
         </div>
       )}
-      {!isLoading && filteredAdvocates.length === 0 && (
+      {!isLoading && advocates.length === 0 && (
         <div className="flex justify-center items-center py-12">
           <div className="text-center">
             <div className="text-gray-500 text-lg mb-2">No Advocates Found</div>
