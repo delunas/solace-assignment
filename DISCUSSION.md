@@ -1,4 +1,10 @@
-#Further Change Discussion
+# Changes Effected
+
+1. Habilitate the Postgres Database
+2. Wrote an Advocate API that supports fuzzy searching, pagination, and caching.
+3. Enabled the front to call on that new API, rehabilitated the Advocate Table to look / feel better. Allowed for Paginated Searches.
+
+# Further Change Discussion
 
 Given more time, I woulkd like to change the following:
 
@@ -13,3 +19,6 @@ Given more time, I woulkd like to change the following:
 
 * Restrictions on Pagination
     Would like to have introduced restrictions to pagination, returning errors for spurious pages and limits.
+
+* Additional indication for searching
+  If you type in a single letter "a" or "e" it's not obvious that records are being filtered since they all contain that letter. Following user input there should be an obvious non-blocking indication that something has happened. Some sort of short-lived animation or progress bar would do the trick, even if the search takes less than a second.
