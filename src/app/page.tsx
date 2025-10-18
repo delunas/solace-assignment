@@ -2,39 +2,53 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { Advocate } from "./types/db";
+import Pagination from "./components/Pagination";
+
+
+
 
 export default function Home() {
   const [advocates, setAdvocates] = useState<Advocate[]>([]);
   const [searchTerm, setSearchTerm] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [page, setPage] = useState<number>(1);
+  const [totalPages, setTotalPages] = useState<number>(0);
+  const [limit, setLimit] = useState<number>(10);
+  const [hasNext, setHasNext] = useState<boolean>(true);
+  const [hasPrev, setHasPrev] = useState<boolean>(false);
   const tableHeaders = ["Name", "City", "Specialties", "Years of Experience", "Phone Number"];
 
   useEffect(() => {
     setIsLoading(true);
-    fetch("/api/advocates").then((response) => {
+    fetch(`/api/advocates?page=${page}&limit=${limit}`).then((response) => {
       response.json().then((jsonResponse) => {
         setAdvocates(jsonResponse.data);
+        setHasNext(jsonResponse.pagination?.hasNext || false);
+        setHasPrev(jsonResponse.pagination?.hasPrev || false);
+        setTotalPages(jsonResponse.pagination?.totalPages || 0);
         setIsLoading(false);
       });
     });
-  }, []);
+  }, [page, limit]);
 
   const searchAdvocates = useCallback(async (query: string | null) => {
     try {
       setIsLoading(true);
       const url = query === null || query.trim() === "" 
-        ? "/api/advocates" 
-        : `/api/advocates?search=${encodeURIComponent(query)}`;
+        ? `/api/advocates?page=${page}&limit=${limit}` 
+        : `/api/advocates?search=${encodeURIComponent(query)}&page=${page}&limit=${limit}`;
       
       const response = await fetch(url);
       const jsonResponse = await response.json();
       setAdvocates(jsonResponse.data);
+      setHasNext(jsonResponse.pagination?.hasNext || false);
+      setHasPrev(jsonResponse.pagination?.hasPrev || false);
       setIsLoading(false);
     } catch (error) {
       console.error("Error searching advocates:", error);
       setIsLoading(false);
     }
-  }, []);
+  }, [page, limit]);
 
   const debouncedSearch = useCallback(
     (() => {
@@ -46,7 +60,7 @@ export default function Home() {
         }, 150);
       };
     })(),
-    [searchAdvocates]
+    [searchAdvocates, page, limit]
   ); 
   
   // usecallback hook here to avoid re-rendering the component unnecessarily. 
@@ -55,6 +69,10 @@ export default function Home() {
 
   const resetList = () => {
     setSearchTerm(null);
+    setPage(1);
+    setLimit(10);
+    setHasNext(true);
+    setHasPrev(false);
     debouncedSearch(null);
   };
 
@@ -73,7 +91,7 @@ export default function Home() {
   return (
     <main className="xl:m-[24px] m-[12px]">
       <h1 className="xl:mb-12 sm:mb-6 mb-4">Solace Advocates</h1>
-      <div className="xl:mb-12 sm:mb-6 mb-4">
+      <div>
         <input 
           className="border border-black xl:text-base sm:text-sm" 
           value={searchTerm || ""}
@@ -87,7 +105,14 @@ export default function Home() {
           Reset Search
         </button>
       </div>
-
+      <Pagination
+        page={page}
+        totalPages={totalPages}
+        hasNext={hasNext}
+        hasPrev={hasPrev}
+        onPrevious={() => setPage(page - 1)}
+        onNext={() => setPage(page + 1)}
+      />
       <table className="w-full text-left table-fixed xl:text-base sm:text-sm text-xs">
         <thead>
           <tr className="bg-gray-100 text-center">
@@ -96,6 +121,7 @@ export default function Home() {
             ))}
           </tr>
         </thead>
+        
         <tbody className="before:content-[''] before:block before:h-4">
           {advocates.map((advocate : Advocate, index : number) => {
               return (
@@ -120,6 +146,7 @@ export default function Home() {
           })}
         </tbody>
       </table>
+
       {isLoading && (
         <div className="flex justify-center items-center py-8">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
@@ -136,6 +163,15 @@ export default function Home() {
           </div>
         </div>
       )}
+
+      <Pagination
+        page={page}
+        totalPages={totalPages}
+        hasNext={hasNext}
+        hasPrev={hasPrev}
+        onPrevious={() => setPage(page - 1)}
+        onNext={() => setPage(page + 1)}
+      />
     </main>
   );
 }

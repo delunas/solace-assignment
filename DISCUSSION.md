@@ -10,3 +10,6 @@ Given more time, I woulkd like to change the following:
 
 * Sorting and Filtering
     Extending the discussion of schema, I would have liked to include ways to sort and filter the data on the table, including filtering by speciality.
+
+* Restrictions on Pagination
+    Would like to have introduced restrictions to pagination, returning errors for spurious pages and limits.
