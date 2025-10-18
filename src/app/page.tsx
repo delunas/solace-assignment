@@ -43,6 +43,7 @@ export default function Home() {
       setAdvocates(jsonResponse.data);
       setHasNext(jsonResponse.pagination?.hasNext || false);
       setHasPrev(jsonResponse.pagination?.hasPrev || false);
+      setTotalPages(jsonResponse.pagination?.totalPages || 0);
       setIsLoading(false);
     } catch (error) {
       console.error("Error searching advocates:", error);
@@ -69,10 +70,6 @@ export default function Home() {
 
   const resetList = () => {
     setSearchTerm(null);
-    setPage(1);
-    setLimit(10);
-    setHasNext(true);
-    setHasPrev(false);
     debouncedSearch(null);
   };
 
