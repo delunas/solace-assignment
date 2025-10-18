@@ -1,4 +1,4 @@
-## Solace Candidate Assignment
+## Solace Candidate Assignment -- Eduardo de Luna
 
 This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
 
@@ -39,3 +39,7 @@ npx drizzle-kit push
 ```bash
 curl -X POST http://localhost:3000/api/seed
 ```
+
+## Notes and Discussions
+
+Notes on PRs and further implementation discussions are to be found on `DISCUSSION.md`
