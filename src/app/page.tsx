@@ -43,6 +43,7 @@ export default function Home() {
       setAdvocates(jsonResponse.data);
       setHasNext(jsonResponse.pagination?.hasNext || false);
       setHasPrev(jsonResponse.pagination?.hasPrev || false);
+      setTotalPages(jsonResponse.pagination?.totalPages || 0);
       setIsLoading(false);
     } catch (error) {
       console.error("Error searching advocates:", error);
@@ -57,7 +58,7 @@ export default function Home() {
         clearTimeout(timeoutId);
         timeoutId = setTimeout(() => {
           searchAdvocates(query);
-        }, 150);
+        }, 200);
       };
     })(),
     [searchAdvocates, page, limit]
@@ -68,16 +69,18 @@ export default function Home() {
   // this also uses immediate invocation to avoid the need to bind the function to the component
 
   const resetList = () => {
-    setSearchTerm(null);
-    setPage(1);
-    setLimit(10);
-    setHasNext(true);
-    setHasPrev(false);
-    debouncedSearch(null);
+    refreshList(null);
   };
 
   const onSearchInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
+    const value : string | null = e.target.value;
+    refreshList(value);
+  };
+
+  const refreshList = (value: string | null) => {
+    if(value != searchTerm) {
+      setPage(1);
+    }
     setSearchTerm(value);
     debouncedSearch(value);
   };
