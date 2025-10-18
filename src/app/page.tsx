@@ -43,6 +43,7 @@ export default function Home() {
       setAdvocates(jsonResponse.data);
       setHasNext(jsonResponse.pagination?.hasNext || false);
       setHasPrev(jsonResponse.pagination?.hasPrev || false);
+      setPage(jsonResponse.pagination?.page || 1);
       setTotalPages(jsonResponse.pagination?.totalPages || 0);
       setIsLoading(false);
     } catch (error) {
