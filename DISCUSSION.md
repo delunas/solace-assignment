@@ -3,6 +3,7 @@
 1. Habilitate the Postgres Database
 2. Wrote an Advocate API that supports fuzzy searching, pagination, and caching.
 3. Enabled the front to call on that new API, rehabilitated the Advocate Table to look / feel better. Allowed for Paginated Searches.
+4. Hardened Advocate API against XSS attacks and unreasonable parameters
 
 # Further Change Discussion
 
@@ -22,3 +23,6 @@ Given more time, I woulkd like to change the following:
 
 * Additional indication for searching
   If you type in a single letter "a" or "e" it's not obvious that records are being filtered since they all contain that letter. Following user input there should be an obvious non-blocking indication that something has happened. Some sort of short-lived animation or progress bar would do the trick, even if the search takes less than a second.
+
+  * Multi-Term Searching
+    The current API doesn't support searching of multiple discreet items associated with different categories (i.e. searching for a last name and a specialty on the same query)
